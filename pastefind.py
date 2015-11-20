@@ -23,7 +23,7 @@ while(1):
     counter = 0
 
     print "Scanning pastebin - iteration " + str(iterater) + "..."
-    
+
     #Open the recently posted pastes page
     try:
         url = urllib.urlopen("http://pastebin.com/archive")
@@ -33,18 +33,26 @@ while(1):
         for line in html_lines:
             if counter < 10:
                 if re.search(r'<td><img src=\"/i/t.gif\"  class=\"i_p0\" alt=\"\" border=\"0\" /><a href=\"/[0-9a-zA-Z]{8}">.*</a></td>', line):
-                    link_id = line[72:80]
-                    #print link_id
-                    
-                    #Begin loading of raw paste text
-                    url_2 = urllib.urlopen("http://pastebin.com/raw.php?i=" + link_id)
-                    raw_text = url_2.read()
-                    url_2.close()
-                    
+                    pattern = re.search(r"href=\"/(.*)\"", line)
+                    if pattern:
+                        link_id = pattern.group(1)
+                    else:
+                        print "Error: could not extract pastebin URL from archive overview. - if this happens continuously, ask developer to make a fix."
+                        continue
+
+                    try:
+                        #Begin loading of raw paste text
+                        url_2 = urllib.urlopen("http://pastebin.com/raw.php?i=" + link_id)
+                        raw_text = url_2.read()
+                        url_2.close()
+                    except(IOError):
+                        print "Network error in raw text loading"
+                        continue
+
                     #if search_term in raw_text:
-                    if re.search(r''+search_term, raw_text):
+                    if re.search(r''+search_term, raw_text, re.IGNORECASE):
                         print "FOUND " + search_term + " in http://pastebin.com/raw.php?i=" + link_id
-                    
+
                     counter += 1
     except(IOError):
         print "Network error - are you connected?"
